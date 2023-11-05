@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace Anon_Checker
 {
@@ -45,7 +46,8 @@ namespace Anon_Checker
 
         private class Checker
         {
-            private const string baseUrl = "https://discord.com/api/v10/users/@me";
+            private const string baseUrl = "https://discord.com/api/v9/users/@me";
+            private const bool checkName = true;
 
             internal static async Task Single(string token)
             {
@@ -53,9 +55,27 @@ namespace Anon_Checker
                 client.DefaultRequestHeaders.Add("Authorization", token);
 
                 HttpResponseMessage response = await client.GetAsync(baseUrl);
+
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    Console.WriteLine(" [+] Valid Token.");
+                    Console.Write(" [+] Valid Token.");
+                    if (checkName)
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+
+                        try
+                        {
+                            string jsonData = JObject.Parse(responseBody)["username"].ToString();
+
+                            Console.WriteLine(" | Name: " + jsonData);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Error deserializing JSON: " + ex.Message);
+                        }
+                    }
+                    else { Console.WriteLine(); }
+
                 }
                 else if (response.StatusCode == (HttpStatusCode)429)
                 {
